@@ -97,14 +97,14 @@ contract DevTheGatheringV2 is Ownable, VRFConsumerBaseV2 {
      * @custom:property {cardsIdsPointer} Mapping of the hash (address + card.externalId) to the cards id owned by the developer.
      * @custom:property {created} Boolean that indicates if the developer data is already created.
      * @custom:property {createdAt} Timestamp of the developer creator.
-     * @custom:property {lastUpdatedAt} Timestamp of the developer last update.
+     * @custom:property {updatedAt} Timestamp of the developer last update.
      */
     struct Developer {
         DeveloperStatus status;
         mapping(bytes32 => uint) cardsIdsPointer;
         bool created;
         uint createdAt;
-        uint lastUpdatedAt;
+        uint updatedAt;
     }
 
     /**
@@ -113,7 +113,7 @@ contract DevTheGatheringV2 is Ownable, VRFConsumerBaseV2 {
     mapping(address => Developer) public developers;
     
     /**
-     * @dev Counter that helps control the ids of developers.
+     * @dev Counter that helps control the ids of developers cards.
      */
     Counters.Counter private _developerCardsIds;
 
@@ -128,7 +128,7 @@ contract DevTheGatheringV2 is Ownable, VRFConsumerBaseV2 {
      * @custom:property {level} uInt that indicates the card level.
      * @custom:property {created} Boolean that indicates if the developer data is already created.
      * @custom:property {createdAt} Timestamp of the developer creator.
-     * @custom:property {lastUpdatedAt} Timestamp of the developer last update.
+     * @custom:property {updatedAt} Timestamp of the developer last update.
      */
     struct Card {
         uint externalId;
@@ -139,7 +139,7 @@ contract DevTheGatheringV2 is Ownable, VRFConsumerBaseV2 {
         uint level;
         bool created;
         uint createdAt;
-        uint lastUpdatedAt;
+        uint updatedAt;
     }
 
     /**
@@ -155,7 +155,37 @@ contract DevTheGatheringV2 is Ownable, VRFConsumerBaseV2 {
     /**
      * @dev Event triggered when a booster pack is open.
      */
-    event BoosterOpened(uint256 id, address from, uint[3] cards);
+    event BoosterPackOpened(uint256 id, address from, Card[3] cards);
+
+    /**
+     * @dev Event triggered when a card is created.
+     */
+    event CardCreated(
+        uint externalId,
+        address owner,
+        CardRarity rarity,
+        bool foil,
+        uint quantity,
+        uint level,
+        bool created,
+        uint createdAt,
+        uint updatedAt
+    );
+
+    /**
+     * @dev Event triggered when a card is updated.
+     */
+    event CardUpdated(
+        uint externalId,
+        address owner,
+        CardRarity rarity,
+        bool foil,
+        uint quantity,
+        uint level,
+        bool created,
+        uint createdAt,
+        uint updatedAt
+    );
 
 
     /**
@@ -194,10 +224,10 @@ contract DevTheGatheringV2 is Ownable, VRFConsumerBaseV2 {
         if (!developers[_msgSender()].created) {
             developers[_msgSender()].created = true;
             developers[_msgSender()].createdAt = block.timestamp;
-            developers[_msgSender()].lastUpdatedAt = developers[_msgSender()].createdAt;
+            developers[_msgSender()].updatedAt = developers[_msgSender()].createdAt;
         }
         else{
-            developers[_msgSender()].lastUpdatedAt = block.timestamp;
+            developers[_msgSender()].updatedAt = block.timestamp;
         }
 
         developers[_msgSender()].status = DeveloperStatus.OPENING_BOOSTER_PACK;
@@ -223,13 +253,13 @@ contract DevTheGatheringV2 is Ownable, VRFConsumerBaseV2 {
         override
     {
         developers[requestToDeveloper[requestId]].status = DeveloperStatus.IDLE;
-        uint[3] memory reveleadCardsIds;
+        Card[3] memory reveleadCards;
         for (uint i = 0; i < randomNumbersNeeded; i++) {
             (uint n1, uint n2, uint n3) = splitRandomInThreeParts(
                 randomData[i]
             );
             Card memory card = revealCard([n1, n2, n3]);
-            reveleadCardsIds[i] = card.externalId;
+            reveleadCards[i] = card;
             bytes32 composedId = keccak256(
                     abi.encodePacked(card.externalId, _msgSender())
             );
@@ -254,7 +284,19 @@ contract DevTheGatheringV2 is Ownable, VRFConsumerBaseV2 {
                     cards[developers[_msgSender()].cardsIdsPointer[composedId]].level++;
                 }
 
-                cards[developers[_msgSender()].cardsIdsPointer[composedId]].lastUpdatedAt = block.timestamp;
+                cards[developers[_msgSender()].cardsIdsPointer[composedId]].updatedAt = block.timestamp;
+
+                emit CardUpdated(
+                    cards[developers[_msgSender()].cardsIdsPointer[composedId]].externalId, 
+                    cards[developers[_msgSender()].cardsIdsPointer[composedId]].owner, 
+                    cards[developers[_msgSender()].cardsIdsPointer[composedId]].rarity, 
+                    cards[developers[_msgSender()].cardsIdsPointer[composedId]].foil, 
+                    cards[developers[_msgSender()].cardsIdsPointer[composedId]].quantity,
+                    cards[developers[_msgSender()].cardsIdsPointer[composedId]].level, 
+                    cards[developers[_msgSender()].cardsIdsPointer[composedId]].created, 
+                    cards[developers[_msgSender()].cardsIdsPointer[composedId]].createdAt, 
+                    cards[developers[_msgSender()].cardsIdsPointer[composedId]].updatedAt
+                );
 
             } else {
                 _developerCardsIds.increment();
@@ -265,17 +307,19 @@ contract DevTheGatheringV2 is Ownable, VRFConsumerBaseV2 {
                 card.quantity = 0;
                 card.level = 1;
                 card.createdAt = block.timestamp;
-                card.lastUpdatedAt = card.createdAt;
+                card.updatedAt = card.createdAt;
 
                 cards[cardId] = card;
                 developers[_msgSender()].cardsIdsPointer[composedId] = cardId;
+
+                emit CardCreated(card.externalId, card.owner, card.rarity, card.foil, card.quantity, card.level, card.created, card.createdAt, card.updatedAt);
             }
         }
 
-        emit BoosterOpened(
+        emit BoosterPackOpened(
             requestId,
             requestToDeveloper[requestId],
-            reveleadCardsIds
+            reveleadCards
         );
     }
 

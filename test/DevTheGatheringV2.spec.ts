@@ -56,17 +56,27 @@ describe("DevTheGatheringV2", () => {
             await expect(contract.connect(owner).openBoosterPack({ value: 200000 })).to.be.revertedWith("Not enough balance.");
         });
 
-        it("Should have worked with the 0.025 ether value, changed the user status to OPENING_BOOSTER_PACK and trigger the BoosterOpened event.", async function () {
+        it("Should have worked with the 0.025 ether value and trigger the BoosterPackOpened event.", async function () {
             const { contract, owner } = await loadFixture(deployContract);
             const result = await contract.connect(owner).openBoosterPack({ value: ethers.utils.parseEther('0.025') });
             await expect(result).to.be.not.reverted;
 
             await expect(await contract.connect(owner).getMyDeveloperStatus()).to.equal(DeveloperStatus.OPENING_BOOSTER_PACK);
 
-            const tx = await result.wait();            
+            const tx = await result.wait();
 
-            await expect(result).to.emit(contract, "BoosterOpened")
-                .withArgs(0, anyValue, [1003,1001,1003]);
+            expect(tx.events?.length).equal(4);
+
+            if(tx.events && tx.events[0].args) {
+                expect(tx.events[0].event).equal('CardCreated');
+                expect(tx.events[0].args[0]).equal(1003);
+            }
+            else{
+                expect(true).equal(false);
+            }
+
+            await expect(result).to.emit(contract, "BoosterPackOpened")
+                .withArgs(0, anyValue, anyValue);
         });
 
         it("Should have set the status setted back to IDLE", async function () {       
