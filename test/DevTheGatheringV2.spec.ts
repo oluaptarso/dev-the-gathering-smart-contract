@@ -65,18 +65,17 @@ describe("DevTheGatheringV2", () => {
 
             const tx = await result.wait();
 
-            expect(tx.events?.length).equal(4);
+            expect(tx.events?.length).equal(3);
 
             if(tx.events && tx.events[0].args) {
                 expect(tx.events[0].event).equal('CardCreated');
-                expect(tx.events[0].args[0]).equal(1003);
+                
+                //externalId of the card == 1003
+                expect(tx.events[0].args[1]).equal(1003);
             }
             else{
                 expect(true).equal(false);
             }
-
-            await expect(result).to.emit(contract, "BoosterPackOpened")
-                .withArgs(0, anyValue, anyValue);
         });
 
         it("Should have set the status setted back to IDLE", async function () {       
