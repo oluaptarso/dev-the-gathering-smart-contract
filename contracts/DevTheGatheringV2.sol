@@ -39,7 +39,7 @@ contract DevTheGatheringV2 is Ownable, VRFConsumerBaseV2 {
     // this limit based on the network that you select, the size of the request,
     // and the processing of the callback request in the fulfillRandomWords()
     // function.
-    uint32 callbackGasLimit = 500000;
+    uint32 callbackGasLimit = 800000;
 
     // The default is 3, but you can set this higher.
     uint16 requestConfirmations = 3;
@@ -252,7 +252,9 @@ contract DevTheGatheringV2 is Ownable, VRFConsumerBaseV2 {
         internal
         override
     {
+        //Developer memory memoryDev = developers[requestToDeveloper[requestId]];
         developers[requestToDeveloper[requestId]].status = DeveloperStatus.IDLE;
+        
         Card[3] memory reveleadCards;
         for (uint i = 0; i < randomNumbersNeeded; i++) {
             (uint n1, uint n2, uint n3) = splitRandomInThreeParts(
@@ -261,41 +263,44 @@ contract DevTheGatheringV2 is Ownable, VRFConsumerBaseV2 {
             Card memory card = revealCard([n1, n2, n3]);
             reveleadCards[i] = card;
             bytes32 composedId = keccak256(
-                    abi.encodePacked(card.externalId, _msgSender())
+                    abi.encodePacked(card.externalId, requestToDeveloper[requestId])
             );
+            
             /**
              * @dev if the developer has already that card.
              */
-            if (cards[developers[_msgSender()].cardsIdsPointer[composedId]].created) {
+            if (cards[developers[requestToDeveloper[requestId]].cardsIdsPointer[composedId]].created) {
+
+                uint findedCardId = developers[requestToDeveloper[requestId]].cardsIdsPointer[composedId];
                 /**
                  * @dev if the new card its a foil one transform the old to foil.
                  */
-                if (card.foil && !cards[developers[_msgSender()].cardsIdsPointer[composedId]].foil) {
-                    cards[developers[_msgSender()].cardsIdsPointer[composedId]].foil = true;
+                if (card.foil && !cards[findedCardId].foil) {
+                    cards[findedCardId].foil = true;
                 }
 
-                cards[developers[_msgSender()].cardsIdsPointer[composedId]].quantity++;
+                cards[findedCardId].quantity++;
 
                 /**
                  * @dev if the card has the requirements to evolve, level up and resets the quantity.
                  */
-                if (cards[developers[_msgSender()].cardsIdsPointer[composedId]].quantity == (cards[developers[_msgSender()].cardsIdsPointer[composedId]].level) * 2) {
-                    cards[developers[_msgSender()].cardsIdsPointer[composedId]].quantity = 0;
-                    cards[developers[_msgSender()].cardsIdsPointer[composedId]].level++;
+                if (cards[findedCardId].quantity == (cards[findedCardId].level) * 2) {
+                    cards[findedCardId].quantity = 0;
+                    cards[findedCardId].level++;
                 }
 
-                cards[developers[_msgSender()].cardsIdsPointer[composedId]].updatedAt = block.timestamp;
+                cards[findedCardId].updatedAt = block.timestamp;
 
                 emit CardUpdated(
-                    cards[developers[_msgSender()].cardsIdsPointer[composedId]].externalId, 
-                    cards[developers[_msgSender()].cardsIdsPointer[composedId]].owner, 
-                    cards[developers[_msgSender()].cardsIdsPointer[composedId]].rarity, 
-                    cards[developers[_msgSender()].cardsIdsPointer[composedId]].foil, 
-                    cards[developers[_msgSender()].cardsIdsPointer[composedId]].quantity,
-                    cards[developers[_msgSender()].cardsIdsPointer[composedId]].level, 
-                    cards[developers[_msgSender()].cardsIdsPointer[composedId]].created, 
-                    cards[developers[_msgSender()].cardsIdsPointer[composedId]].createdAt, 
-                    cards[developers[_msgSender()].cardsIdsPointer[composedId]].updatedAt
+                    cards[findedCardId].externalId, 
+                    cards[findedCardId].owner, 
+                    cards[findedCardId].rarity, 
+                    cards[findedCardId].foil, 
+                    cards[findedCardId].quantity,
+                    cards[findedCardId].level, 
+                    cards[findedCardId].created, 
+                    cards[findedCardId].createdAt, 
+                    cards[findedCardId].updatedAt
                 );
 
             } else {
@@ -303,14 +308,14 @@ contract DevTheGatheringV2 is Ownable, VRFConsumerBaseV2 {
                 uint cardId = _developerCardsIds.current();
 
                 card.created = true;
-                card.owner = _msgSender();
+                card.owner = requestToDeveloper[requestId];
                 card.quantity = 0;
                 card.level = 1;
                 card.createdAt = block.timestamp;
                 card.updatedAt = card.createdAt;
 
                 cards[cardId] = card;
-                developers[_msgSender()].cardsIdsPointer[composedId] = cardId;
+                developers[requestToDeveloper[requestId]].cardsIdsPointer[composedId] = cardId;
 
                 emit CardCreated(card.externalId, card.owner, card.rarity, card.foil, card.quantity, card.level, card.created, card.createdAt, card.updatedAt);
             }
