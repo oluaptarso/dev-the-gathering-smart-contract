@@ -153,11 +153,6 @@ contract DevTheGatheringV2 is Ownable, VRFConsumerBaseV2 {
     mapping(uint256 => address) private requestToDeveloper;
 
     /**
-     * @dev Event triggered when a booster pack is open.
-     */
-    event BoosterPackOpened(uint256 id, address from, Card[3] cards);
-
-    /**
      * @dev Event triggered when a card is created.
      */
     event CardCreated(
@@ -219,7 +214,16 @@ contract DevTheGatheringV2 is Ownable, VRFConsumerBaseV2 {
         require(
             developers[_msgSender()].status == DeveloperStatus.IDLE,
             "A booster pack is currently being opened."
-        );        
+        );
+        
+        // Will revert if subscription is not set and funded.
+        uint256 requestId = COORDINATOR.requestRandomWords(
+            vrfKeyHash,
+            vrfSubscriptionId,
+            requestConfirmations,
+            callbackGasLimit,
+            randomNumbersNeeded
+        );
 
         if (!developers[_msgSender()].created) {
             developers[_msgSender()].created = true;
@@ -231,15 +235,6 @@ contract DevTheGatheringV2 is Ownable, VRFConsumerBaseV2 {
         }
 
         developers[_msgSender()].status = DeveloperStatus.OPENING_BOOSTER_PACK;
-        
-        // Will revert if subscription is not set and funded.
-        uint256 requestId = COORDINATOR.requestRandomWords(
-            vrfKeyHash,
-            vrfSubscriptionId,
-            requestConfirmations,
-            callbackGasLimit,
-            randomNumbersNeeded
-        );
 
         requestToDeveloper[requestId] = _msgSender();
     }
@@ -254,14 +249,13 @@ contract DevTheGatheringV2 is Ownable, VRFConsumerBaseV2 {
     {
         //Developer memory memoryDev = developers[requestToDeveloper[requestId]];
         developers[requestToDeveloper[requestId]].status = DeveloperStatus.IDLE;
-        
-        Card[3] memory reveleadCards;
+
         for (uint i = 0; i < randomNumbersNeeded; i++) {
-            (uint n1, uint n2, uint n3) = splitRandomInThreeParts(
-                randomData[i]
-            );
+            
+            (uint n1, uint n2, uint n3) = splitRandomInThreeParts(randomData[i]);
+            
             Card memory card = revealCard([n1, n2, n3]);
-            reveleadCards[i] = card;
+            
             bytes32 composedId = keccak256(
                     abi.encodePacked(card.externalId, requestToDeveloper[requestId])
             );
@@ -320,12 +314,6 @@ contract DevTheGatheringV2 is Ownable, VRFConsumerBaseV2 {
                 emit CardCreated(card.externalId, card.owner, card.rarity, card.foil, card.quantity, card.level, card.created, card.createdAt, card.updatedAt);
             }
         }
-
-        emit BoosterPackOpened(
-            requestId,
-            requestToDeveloper[requestId],
-            reveleadCards
-        );
     }
 
     /**
