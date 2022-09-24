@@ -131,6 +131,7 @@ contract DevTheGatheringV2 is Ownable, VRFConsumerBaseV2 {
      * @custom:property {updatedAt} Timestamp of the developer last update.
      */
     struct Card {
+        uint id;
         uint externalId;
         address owner;
         CardRarity rarity;
@@ -156,6 +157,7 @@ contract DevTheGatheringV2 is Ownable, VRFConsumerBaseV2 {
      * @dev Event triggered when a card is created.
      */
     event CardCreated(
+        uint id,
         uint externalId,
         address owner,
         CardRarity rarity,
@@ -171,6 +173,7 @@ contract DevTheGatheringV2 is Ownable, VRFConsumerBaseV2 {
      * @dev Event triggered when a card is updated.
      */
     event CardUpdated(
+        uint id,
         uint externalId,
         address owner,
         CardRarity rarity,
@@ -286,6 +289,7 @@ contract DevTheGatheringV2 is Ownable, VRFConsumerBaseV2 {
                 cards[findedCardId].updatedAt = block.timestamp;
 
                 emit CardUpdated(
+                    cards[findedCardId].id,
                     cards[findedCardId].externalId, 
                     cards[findedCardId].owner, 
                     cards[findedCardId].rarity, 
@@ -301,6 +305,7 @@ contract DevTheGatheringV2 is Ownable, VRFConsumerBaseV2 {
                 _developerCardsIds.increment();
                 uint cardId = _developerCardsIds.current();
 
+                card.id = cardId;
                 card.created = true;
                 card.owner = requestToDeveloper[requestId];
                 card.quantity = 0;
@@ -311,7 +316,18 @@ contract DevTheGatheringV2 is Ownable, VRFConsumerBaseV2 {
                 cards[cardId] = card;
                 developers[requestToDeveloper[requestId]].cardsIdsPointer[composedId] = cardId;
 
-                emit CardCreated(card.externalId, card.owner, card.rarity, card.foil, card.quantity, card.level, card.created, card.createdAt, card.updatedAt);
+                emit CardCreated(
+                    card.id, 
+                    card.externalId, 
+                    card.owner, 
+                    card.rarity, 
+                    card.foil, 
+                    card.quantity, 
+                    card.level, 
+                    card.created, 
+                    card.createdAt, 
+                    card.updatedAt
+                );
             }
         }
     }
