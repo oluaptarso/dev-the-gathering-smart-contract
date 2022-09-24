@@ -4,7 +4,7 @@
   "private": true,
   "scripts": {
     "compile": "npx hardhat compile",
-    "deploy-mumbai" : "npx hardhat run scripts/deploy.ts --network matic",
+    "deploy-mumbai" : "npx hardhat run scripts/deploy.v2.ts --network matic",
     "test-v2" : "npx hardhat test .\\test\\DevTheGatheringV2.spec.ts"
   },
   "dependencies": {    

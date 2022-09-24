@@ -5,7 +5,7 @@ async function main() {
 
   if(!process.env.VRF_SUBSCRIPTION_ID || !process.env.VRF_COORDINATOR || !process.env.VRF_LINK_TOKEN || !process.env.VRF_KEYHASH) return;
 
-  const DevTheGatheringV2 = await ethers.getContractFactory("DevTheGathering2");
+  const DevTheGatheringV2 = await ethers.getContractFactory("DevTheGatheringV2");
   const contract = await DevTheGatheringV2.deploy(process.env.VRF_COORDINATOR, process.env.VRF_LINK_TOKEN, process.env.VRF_KEYHASH, process.env.VRF_SUBSCRIPTION_ID);
 
   await contract.deployed();
