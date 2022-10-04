@@ -332,6 +332,19 @@ contract DevTheGatheringV2 is Ownable, VRFConsumerBaseV2 {
         }
     }
 
+    //callbackGasLimit
+    /**
+     * @dev Method that the owner of coontract can use to update the booster pack price.
+     */
+    function updateCallbackGasLimit(uint32 newPrice)
+        public
+        onlyOwner
+        returns (uint32)
+    {
+        callbackGasLimit = newPrice;
+        return newPrice;
+    }
+
     /**
      * @dev Method that the owner of coontract can use to update the booster pack price.
      */
@@ -396,15 +409,15 @@ contract DevTheGatheringV2 is Ownable, VRFConsumerBaseV2 {
         view
         returns (Card memory)
     {
-        uint rarityChance = (randoms[0] % 100) + 1;
-        bool foil = ((randoms[2] % 100) + 1) <= 5;
+        uint rarityChance = (randoms[0] % 100);
+        bool foil = ((randoms[2] % 100)) <= 4;
         Card memory card;
         card.foil = foil;
 
-        if (rarityChance >= 50) {
+        if (rarityChance >= 60) {
             card.rarity = CardRarity.COMMON;
             card.externalId = (randoms[1] % cardQuantitiesByRarity[CardRarity.COMMON]) + 1;
-        } else if (rarityChance >= 30 && rarityChance <= 49) {
+        } else if (rarityChance >= 30 && rarityChance <= 59) {
             card.rarity = CardRarity.UNCOMMON;
             card.externalId = ((randoms[1] % cardQuantitiesByRarity[CardRarity.UNCOMMON]) + 1) + 1000;
         } else if (rarityChance >= 13 && rarityChance <= 29) {
