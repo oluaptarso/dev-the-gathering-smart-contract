@@ -10,7 +10,8 @@ import "@openzeppelin/contracts/utils/Counters.sol";
 
 /**
  * @title DevTheGathering
- * @dev The DevTheGathering web application's smart contract is responsible for generating random cards when a user opens a booster pack and stores the cards and the owner's data on the blockchain.
+ * @dev The DevTheGathering web application's smart contract is responsible for generating random cards when a user opens a booster pack and 
+ *      stores the cards and the owner's data on the blockchain.
  */
 contract DevTheGatheringV2 is Ownable, VRFConsumerBaseV2 {
     
