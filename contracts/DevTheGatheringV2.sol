@@ -334,7 +334,7 @@ contract DevTheGatheringV2 is Ownable, VRFConsumerBaseV2 {
 
     //callbackGasLimit
     /**
-     * @dev Method that the owner of coontract can use to update the booster pack price.
+     * @dev Method that the owner of contract can use to update the booster pack price.
      */
     function updateCallbackGasLimit(uint32 newPrice)
         public
@@ -346,7 +346,7 @@ contract DevTheGatheringV2 is Ownable, VRFConsumerBaseV2 {
     }
 
     /**
-     * @dev Method that the owner of coontract can use to update the booster pack price.
+     * @dev Method that the owner of contract can use to update the booster pack price.
      */
     function updateBoosterPrice(uint256 newBoosterPrice)
         public
@@ -358,7 +358,7 @@ contract DevTheGatheringV2 is Ownable, VRFConsumerBaseV2 {
     }
 
     /**
-     * @dev Method that the owner of coontract can use to update the cards quantity.
+     * @dev Method that the owner of contract can use to update the cards quantity.
      */
     function updateCardsQuantity(CardRarity rarity, uint newQuantity)
         public
@@ -368,7 +368,7 @@ contract DevTheGatheringV2 is Ownable, VRFConsumerBaseV2 {
     }
 
     /**
-     * @dev Method that the owner of coontract can use to withdraw the contract balance.
+     * @dev Method that the owner of contract can use to withdraw the contract balance.
      */
     function withdraw() public onlyOwner {
         (bool success, ) = owner().call{value: address(this).balance}("");
@@ -394,9 +394,9 @@ contract DevTheGatheringV2 is Ownable, VRFConsumerBaseV2 {
             uint256 n3
         )
     {
-        uint message = value / _firstCut;
-        uint lastPart = message % _lastBlockCut;
-        n1 = message / _lastBlockCut;
+        uint dataToSplit = value / _firstCut;
+        uint lastPart = dataToSplit % _lastBlockCut;
+        n1 = dataToSplit / _lastBlockCut;
         n2 = lastPart / _lastPartCut;
         n3 = lastPart % _lastPartCut;
     }
